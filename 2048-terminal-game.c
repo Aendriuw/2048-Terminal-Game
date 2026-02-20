@@ -173,11 +173,12 @@ void write_board(const int scr, const int num, int board[NMAX][NMAX], int *maxn)
 }
 
 // Builds the prev_board board needed for the undo function and memorises the previous score.
-void build_prev_board(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMAX], const int scr, int *prev_scr) {
+void build_prev_board(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMAX],
+					  const int scr, int *prev_scr) {
 	for (int i = 0; i < num; ++i)
 		for (int j = 0; j < num; ++j)
 			prev_board[i][j] = board[i][j];
-	
+
 	*prev_scr = scr;
 }
 
@@ -419,7 +420,8 @@ int is_empty_cells(const int num, int board[NMAX][NMAX]) {
 }
 
 // Undoes the last move made by the player, keeping track of the previous score.
-void undo(const int num, int board[NMAX][NMAX], const int prev_board[NMAX][NMAX], int *scr, const int prev_scr) {
+void undo(const int num, int board[NMAX][NMAX], const int prev_board[NMAX][NMAX], int *scr,
+		  const int prev_scr) {
 	for (int i = 0; i < num; ++i)
 		for (int j = 0; j < num; ++j)
 			board[i][j] = prev_board[i][j];
@@ -432,7 +434,7 @@ void undo(const int num, int board[NMAX][NMAX], const int prev_board[NMAX][NMAX]
 // is a cell that contains the value 2048 (in which case the game is won).
 void run_game(const int num) {
 	int board[NMAX][NMAX] = {0}, prev_board[NMAX][NMAX] = {0}, free_pos[130];
-	int ok_game = 0, maxn = 0, scr = 0, prev_scr = 0;
+	int ok_game = 0, maxn = 0, scr = 0, prev_scr = 0, move_cnt = 0;
 
 	enable_view();
 	clear_screen();
@@ -458,6 +460,7 @@ void run_game(const int num) {
 				spawn(num, board, free_pos, &ok_game);
 				write_board(scr, num, board, &maxn);
 				usleep(150000);
+				++move_cnt;
 			}
 		}
 		if (key == KEY_UP) {
@@ -468,6 +471,7 @@ void run_game(const int num) {
 				spawn(num, board, free_pos, &ok_game);
 				write_board(scr, num, board, &maxn);
 				usleep(150000);
+				++move_cnt;
 			}
 		}
 		if (key == KEY_DOWN) {
@@ -478,6 +482,7 @@ void run_game(const int num) {
 				spawn(num, board, free_pos, &ok_game);
 				write_board(scr, num, board, &maxn);
 				usleep(150000);
+				++move_cnt;
 			}
 		}
 		if (key == KEY_RIGHT) {
@@ -488,13 +493,15 @@ void run_game(const int num) {
 				spawn(num, board, free_pos, &ok_game);
 				write_board(scr, num, board, &maxn);
 				usleep(150000);
+				++move_cnt;
 			}
 		}
-		if (key == KEY_R) {
+		if (key == KEY_R && move_cnt != 0) {
 			undo(num, board, prev_board, &scr, prev_scr);
 			clear_screen();
 			write_board(scr, num, board, &maxn);
 			usleep(150000);
+			++move_cnt;
 		}
 	}
 
@@ -502,7 +509,7 @@ void run_game(const int num) {
 	fprintf(stdout, "No possible moves left.\nYou lost!\n");
 }
 
-int main() {
+int main(void) {
 	int num;
 	srand((unsigned)time(NULL));
 
