@@ -114,9 +114,9 @@ int read_grid_num(int *num) {
 				valid_n = 1;
 
 			if (enter_att == 3) fprintf(stdout, "JUST ENTER A NUMBER BETWEEN 4 AND 8!\n");
-			if (enter_att == 5) fprintf(stdout, "ARE YOU MENTAL?\n");
+			if (enter_att == 5) fprintf(stdout, "Okay... Please... Enter a number between 4 and 8...\n");
 			if (enter_att == 7) {
-				fprintf(stdout, "IM SICK OF THISSS!\n");
+				fprintf(stdout, "Enough!\n");
 				return 1;
 			}
 
