@@ -1,0 +1,119 @@
+<!-- Milosoiu Andrei -->
+<!-- Email: andrei18.milosoiu@gmail.com -->
+
+# 2048 Terminal Game
+
+## Build (bash)
+gcc -o 2048 2048-terminal-game.c
+
+## Run (bash)
+./2048
+
+## How to play
+1. Use the arrow keys to slide_x the tiles in a certain direction.
+2. When 2 tiles of the same value collide (one slides into the other) there remains a single tile with the value of the sum of those 2. 
+3. Use the r key to undo one move.
+4. A new tile of 2 or 4 spawns in a free space after every valid move.
+5. The game is won when the number 2048 is created.
+6. The game is lost when there are no possible moves left.
+
+## Implementation
+
+### enable_view()
+- Disables line buffering so keypresses are registered without waiting for Enter.
+- Saves the original settings first so they can be restored later by disable_raw_mode().
+
+### disable_raw_mode()
+- Restores the terminal to its original settings.
+- Called before exitting the program to avoid leaving the terminal in this state.
+
+### copy_matrix()
+- Copies every value of matrix src into matrix dest.
+
+### clear_screen()
+- Clears the current screen using ANSI escape codes.
+
+### read_key()
+- Reads a keypress from stdin and returns its associated code.
+- Returns NO_KEY if no key is currently pressed.
+- Returns KEY_R if the key pressed is r or R.
+- Arrow keys are detected via ANSI escape sequences: ESC followed by [ and then A (up), B (down), C (right), or D (left).
+
+### is_num()
+- Returns 1 if the given string is a positive number, 0 otherwise.
+
+### read_grid_num()
+- Requires the user to enter a number between 4 and 8.
+- The entered value is memorised at the address of the num variable.
+- Returns -1 if sscanf() fails, 1 if the user enters too many invalid values.
+- Returns 0 on success.
+
+### print_score()
+- Outputs the current score to stdout.
+
+### random_digit()
+- Returns a random digit between 2 and 4.
+- 4 has a chance of 1/8 to be returned, while 2 has a chance of 7/8.
+
+### write_board()
+- Writes the current board to stdout.
+- Where there is an empty cell (the cell has a value of 0), it outputs empty spaces.
+- Also tracks the max value in the board in the variable maxn.
+
+### build_prev_board()
+- Builds the prev_board needed for the undo function and memorises the previous score.
+
+### is_move_valid()
+- Compares the current board with its previous state (prev_board).
+- Returns 1 if any cell differs (a move had any effect), 0 otherwise.
+
+### is_any_possible_move()
+- Returns 1 if there are any possible moves left, 0 otherwise.
+- Checks for adjacent equal cells both horizontally and vertically.
+
+### spawn()
+- Spawns a new number in a random free cell.
+- The free cells' coordinates are memorised inside an array.
+- If no free cells exist and no merges are possible, sets ok_game to 1 to end the game.
+
+### slide_x()
+- Slides a number into an empty space in the given direction on the x-axis.
+- Keeps moving the tile step by step as long as the destination cell is empty and the tile stays within board boundaries.
+- Updates the position pointers to the tile's final location after sliding.
+
+### slide_y()
+- Slides a number into an empty space in the given direction on the y-axis.
+- Keeps moving the tile step by step as long as the destination cell is empty and the tile stays within board boundaries.
+- Updates the position pointers to the tile's final location after sliding.
+
+### slide_merge()
+- Merges a cell with an equal neighbour cell in the given direction (curr_dir), if possible.
+- Doubles the neighbour's value, clears the current cell, and adds the merged value to the score.
+- Updates the current position to the position after the merge.
+
+### move_right()
+- Processes a move in the 'right' direction for the entire board (row by row).
+
+### move_left()
+- Processes a move in the 'left' direction for the entire board (row by row).
+
+### move_up()
+- Processes a move in the 'up' direction for the entire board (column by column).
+
+### move_down()
+- Processes a move in the 'down' direction for the entire board (column by column).
+
+### is_empty_cells()
+- Returns 1 if there are any empty cells, 0 otherwise.
+
+### undo()
+- Undoes the last move made by the player, keeping track of the previous score.
+
+### process_move()
+- Processes the outcome of a move.
+- If the move was valid (the board changed), clears the screen, spawns a new tile, redraws the board, and increments the move counter.
+- If the move was invalid (the board did not change), restores the previous board state.
+
+### run_game()
+- Runs a game of 2048.
+- The game ends if there are no possible moves left (in which case the game is lost), or if there is a cell that contains the value 2048 (in which case the game is won).
