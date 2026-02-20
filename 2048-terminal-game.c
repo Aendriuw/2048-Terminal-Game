@@ -437,7 +437,7 @@ void undo(const int num, int board[NMAX][NMAX], const int prev_board[NMAX][NMAX]
 }
 
 void process_move(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMAX],
-				  int board_buffer[NMAX][NMAX], int scr, int *prev_scr, int *maxn, int *ok_game,
+				  int board_buffer[NMAX][NMAX], int scr, int *prev_scr, int scr_buffer, int *maxn, int *ok_game,
 				  int *move_cnt) {
 	if (is_move_valid(num, board, prev_board)) {
 		clear_screen();
@@ -446,7 +446,7 @@ void process_move(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMA
 		usleep(150000);
 		(*move_cnt)++;
 	} else {
-		build_prev_board(num, board_buffer, prev_board, scr, prev_scr);
+		build_prev_board(num, board_buffer, prev_board, scr_buffer, prev_scr);
 	}
 }
 
@@ -454,8 +454,8 @@ void process_move(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMA
 // The game ends if there are no possible moves left (in which case the game is lost), or if there
 // is a cell that contains the value 2048 (in which case the game is won).
 void run_game(const int num) {
-	int board[NMAX][NMAX] = {0}, prev_board[NMAX][NMAX] = {0}, board_buffer[NMAX][NMAX];
-	int free_pos[FREE_POS_MAX];
+	int board[NMAX][NMAX] = {0}, prev_board[NMAX][NMAX] = {0}, free_pos[FREE_POS_MAX];
+	int board_buffer[NMAX][NMAX] = {0}, scr_buffer = 0;
 	int ok_game = 0, maxn = 0, scr = 0, prev_scr = 0, move_cnt = 0;
 
 	enable_view();
@@ -476,32 +476,35 @@ void run_game(const int num) {
 		int key = readKey();
 
 		if (key == KEY_LEFT) {
-			copy_matrix(num, prev_board, board_buffer);
+			build_prev_board(num, prev_board, board_buffer, prev_scr, &scr_buffer);
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_left(num, board, &scr);
 
-			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, &maxn, &ok_game,
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn, &ok_game,
 						 &move_cnt);
 		}
 		if (key == KEY_UP) {
+			build_prev_board(num, prev_board, board_buffer, prev_scr, &scr_buffer);
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_up(num, board, &scr);
 
-			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, &maxn, &ok_game,
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn, &ok_game,
 						 &move_cnt);
 		}
 		if (key == KEY_DOWN) {
+			build_prev_board(num, prev_board, board_buffer, prev_scr, &scr_buffer);
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_down(num, board, &scr);
 
-			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, &maxn, &ok_game,
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn, &ok_game,
 						 &move_cnt);
 		}
 		if (key == KEY_RIGHT) {
+			build_prev_board(num, prev_board, board_buffer, prev_scr, &scr_buffer);
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_right(num, board, &scr);
 
-			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, &maxn, &ok_game,
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn, &ok_game,
 						 &move_cnt);
 		}
 		if (key == KEY_R && move_cnt != 0) {
