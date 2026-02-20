@@ -56,7 +56,7 @@ void clear_screen() {
 
 // Reads a keypress from stdin and returns it's associated code.
 // Returns NO_KEY if no key is currently pressed.
-int readKey() {
+int read_key() {
 	char c = 0;
 	if (read(STDIN_FILENO, &c, 1) <= 0) return NO_KEY;
 
@@ -191,7 +191,6 @@ void build_prev_board(const int num, int board[NMAX][NMAX], int prev_board[NMAX]
 
 // Compares the current board with it's previous state (prev_board).
 // Returns 1 if any cell differs (a move had any effect), 0 otherwise.
-// This function is needed in order to decide whether to spawn a new number after a move or not.
 int is_move_valid(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMAX]) {
 	for (int i = 0; i < num; ++i)
 		for (int j = 0; j < num; ++j)
@@ -201,7 +200,7 @@ int is_move_valid(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMA
 }
 
 // Returns 1 if there are any possible moves left, 0 otherwise.
-int any_move_possible(const int num, int board[NMAX][NMAX]) {
+int is_any_possible_move(const int num, int board[NMAX][NMAX]) {
 	for (int i = 0; i < num; ++i)
 		for (int j = 0; j < num - 1; ++j)
 			if (board[i][j] == board[i][j + 1]) return 1;
@@ -233,7 +232,7 @@ void spawn(int n, int board[NMAX][NMAX], int *ok_game) {
 		plc = rand() % free_cnt;
 		board[free_pos[2 * plc]][free_pos[2 * plc + 1]] = random_digit();
 	} else {
-		if (!any_move_possible(n, board)) {
+		if (!is_any_possible_move(n, board)) {
 			plc = rand() % free_cnt;
 			board[free_pos[2 * plc]][free_pos[2 * plc + 1]] = random_digit();
 		} else {
@@ -243,7 +242,7 @@ void spawn(int n, int board[NMAX][NMAX], int *ok_game) {
 }
 
 // Slides a number into an empty space in the given direction on the x-axis.
-void case0(int *j, int *i, int curr_dir, const int num, int board[NMAX][NMAX]) {
+void slide_x(int *j, int *i, int curr_dir, const int num, int board[NMAX][NMAX]) {
 	int aux_i = *i;
 	int aux_j = *j;
 
@@ -261,7 +260,7 @@ void case0(int *j, int *i, int curr_dir, const int num, int board[NMAX][NMAX]) {
 }
 
 // Slides a number into an empty space in the given direction on the y-axis.
-void case0y(int *j, int *i, int curr_dir, const int num, int board[NMAX][NMAX]) {
+void slide_y(int *j, int *i, int curr_dir, const int num, int board[NMAX][NMAX]) {
 	int aux_i = *i;
 	int aux_j = *j;
 
@@ -282,7 +281,7 @@ void case0y(int *j, int *i, int curr_dir, const int num, int board[NMAX][NMAX]) 
 // Doubles the neighbour's value, clears the current cell, and adds the
 // merged value to the score.
 // Updates the current position to the position after the merge.
-void casen(int *j, int *i, int curr_dir, int board[NMAX][NMAX], int *scr) {
+void slide_merge(int *j, int *i, int curr_dir, int board[NMAX][NMAX], int *scr) {
 	int aux_i = *i;
 	int aux_j = *j;
 
@@ -311,16 +310,16 @@ void move_right(const int num, int board[NMAX][NMAX], int *scr) {
 		for (int j = num - 2; j >= 0; --j) {
 			if (board[i][j] != 0 && board[i][j + 1] == 0) {
 				jc = j;
-				case0(&jc, &i, 1, num, board);
+				slide_x(&jc, &i, 1, num, board);
 
 				if (jc < num - 1 && board[i][jc] != 0 && board[i][jc + 1] == board[i][jc] && okd2) {
-					casen(&jc, &i, 1, board, scr);
+					slide_merge(&jc, &i, 1, board, scr);
 					okd = !okd;
 				}
 
 			} else if (board[i][j] != 0 && board[i][j + 1] == board[i][j] && okd2) {
 				jc = j;
-				casen(&jc, &i, 1, board, scr);
+				slide_merge(&jc, &i, 1, board, scr);
 
 				okd = !okd;
 			}
@@ -340,16 +339,16 @@ void move_left(const int num, int board[NMAX][NMAX], int *scr) {
 		for (int j = 1; j < num; ++j) {
 			if (board[i][j] != 0 && board[i][j - 1] == 0) {
 				jc = j;
-				case0(&jc, &i, 0, num, board);
+				slide_x(&jc, &i, 0, num, board);
 
 				if (jc > 0 && board[i][jc] != 0 && board[i][jc - 1] == board[i][jc] && okd2) {
-					casen(&jc, &i, 0, board, scr);
+					slide_merge(&jc, &i, 0, board, scr);
 					okd = !okd;
 				}
 
 			} else if (board[i][j] != 0 && board[i][j - 1] == board[i][j] && okd2) {
 				jc = j;
-				casen(&jc, &i, 0, board, scr);
+				slide_merge(&jc, &i, 0, board, scr);
 
 				okd = !okd;
 			}
@@ -369,16 +368,16 @@ void move_up(const int num, int board[NMAX][NMAX], int *scr) {
 		for (int i = 1; i < num; ++i) {
 			if (board[i][j] != 0 && board[i - 1][j] == 0) {
 				ic = i;
-				case0y(&j, &ic, 2, num, board);
+				slide_y(&j, &ic, 2, num, board);
 
 				if (ic > 0 && board[ic][j] != 0 && board[ic - 1][j] == board[ic][j] && okd2) {
-					casen(&j, &ic, 2, board, scr);
+					slide_merge(&j, &ic, 2, board, scr);
 					okd = !okd;
 				}
 
 			} else if (board[i][j] != 0 && board[i - 1][j] == board[i][j] && okd2) {
 				ic = i;
-				casen(&j, &ic, 2, board, scr);
+				slide_merge(&j, &ic, 2, board, scr);
 
 				okd = !okd;
 			}
@@ -398,16 +397,16 @@ void move_down(const int num, int board[NMAX][NMAX], int *scr) {
 		for (int i = num - 2; i >= 0; --i) {
 			if (board[i][j] != 0 && board[i + 1][j] == 0) {
 				ic = i;
-				case0y(&j, &ic, 3, num, board);
+				slide_y(&j, &ic, 3, num, board);
 
 				if (board[ic][j] != 0 && board[ic + 1][j] == board[ic][j] && okd2) {
-					casen(&j, &ic, 3, board, scr);
+					slide_merge(&j, &ic, 3, board, scr);
 					okd = 0;
 				}
 
 			} else if (ic < num - 1 && board[i][j] != 0 && board[i + 1][j] == board[i][j] && okd2) {
 				ic = i;
-				casen(&j, &ic, 3, board, scr);
+				slide_merge(&j, &ic, 3, board, scr);
 
 				okd = 0;
 			}
@@ -436,9 +435,10 @@ void undo(const int num, int board[NMAX][NMAX], const int prev_board[NMAX][NMAX]
 	*scr = prev_scr;
 }
 
+// Processes the outcome of a move.
 void process_move(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMAX],
-				  int board_buffer[NMAX][NMAX], int scr, int *prev_scr, int scr_buffer, int *maxn, int *ok_game,
-				  int *move_cnt) {
+				  int board_buffer[NMAX][NMAX], int scr, int *prev_scr, int scr_buffer, int *maxn,
+				  int *ok_game, int *move_cnt) {
 	if (is_move_valid(num, board, prev_board)) {
 		clear_screen();
 		spawn(num, board, ok_game);
@@ -464,7 +464,7 @@ void run_game(const int num) {
 	write_board(scr, num, board, &maxn);
 
 	while (!ok_game) {
-		if (!is_empty_cells(num, board) && !any_move_possible(num, board)) ok_game = 1;
+		if (!is_empty_cells(num, board) && !is_any_possible_move(num, board)) ok_game = 1;
 
 		if (maxn == 2048) {
 			disable_raw_mode();
@@ -473,39 +473,39 @@ void run_game(const int num) {
 			return;
 		}
 
-		int key = readKey();
+		int key = read_key();
 
 		if (key == KEY_LEFT) {
 			build_prev_board(num, prev_board, board_buffer, prev_scr, &scr_buffer);
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_left(num, board, &scr);
 
-			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn, &ok_game,
-						 &move_cnt);
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn,
+						 &ok_game, &move_cnt);
 		}
 		if (key == KEY_UP) {
 			build_prev_board(num, prev_board, board_buffer, prev_scr, &scr_buffer);
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_up(num, board, &scr);
 
-			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn, &ok_game,
-						 &move_cnt);
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn,
+						 &ok_game, &move_cnt);
 		}
 		if (key == KEY_DOWN) {
 			build_prev_board(num, prev_board, board_buffer, prev_scr, &scr_buffer);
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_down(num, board, &scr);
 
-			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn, &ok_game,
-						 &move_cnt);
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn,
+						 &ok_game, &move_cnt);
 		}
 		if (key == KEY_RIGHT) {
 			build_prev_board(num, prev_board, board_buffer, prev_scr, &scr_buffer);
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_right(num, board, &scr);
 
-			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn, &ok_game,
-						 &move_cnt);
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, scr_buffer, &maxn,
+						 &ok_game, &move_cnt);
 		}
 		if (key == KEY_R && move_cnt != 0) {
 			undo(num, board, prev_board, &scr, prev_scr);
