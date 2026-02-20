@@ -40,6 +40,15 @@ void disable_raw_mode() {
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
 }
 
+// Copies matrix every value of matrix src into matrix dest.
+void copy_matrix(const int num, const int src[NMAX][NMAX], int dest[NMAX][NMAX]) {
+	for (int i = 0; i < num; ++i) {
+		for (int j = 0; j < num; ++j) {
+			dest[i][j] = src[i][j];
+		}
+	}
+}
+
 // Clears the current screen using ANSI escape codes.
 void clear_screen() {
 	fprintf(stdout, "\033[2J\033[H");
@@ -175,9 +184,7 @@ void write_board(const int scr, const int num, int board[NMAX][NMAX], int *maxn)
 // Builds the prev_board board needed for the undo function and memorises the previous score.
 void build_prev_board(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMAX],
 					  const int scr, int *prev_scr) {
-	for (int i = 0; i < num; ++i)
-		for (int j = 0; j < num; ++j)
-			prev_board[i][j] = board[i][j];
+	copy_matrix(num, board, prev_board);
 
 	*prev_scr = scr;
 }
@@ -208,8 +215,8 @@ int any_move_possible(const int num, int board[NMAX][NMAX]) {
 
 // Spawns a new number in a random free cell.
 // The free cells' coordinates are memorised inside an array.
-void spawn(int n, int board[NMAX][NMAX], int free_pos[FREE_POS_MAX], int *ok_game) {
-	int free_cnt = 0, plc;
+void spawn(int n, int board[NMAX][NMAX], int *ok_game) {
+	int free_cnt = 0, plc, free_pos[FREE_POS_MAX];
 
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
@@ -429,16 +436,31 @@ void undo(const int num, int board[NMAX][NMAX], const int prev_board[NMAX][NMAX]
 	*scr = prev_scr;
 }
 
+void process_move(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMAX],
+				  int board_buffer[NMAX][NMAX], int scr, int *prev_scr, int *maxn, int *ok_game,
+				  int *move_cnt) {
+	if (is_move_valid(num, board, prev_board)) {
+		clear_screen();
+		spawn(num, board, ok_game);
+		write_board(scr, num, board, maxn);
+		usleep(150000);
+		(*move_cnt)++;
+	} else {
+		build_prev_board(num, board_buffer, prev_board, scr, prev_scr);
+	}
+}
+
 // Runs a game of 2048.
 // The game ends if there are no possible moves left (in which case the game is lost), or if there
 // is a cell that contains the value 2048 (in which case the game is won).
 void run_game(const int num) {
-	int board[NMAX][NMAX] = {0}, prev_board[NMAX][NMAX] = {0}, free_pos[130];
+	int board[NMAX][NMAX] = {0}, prev_board[NMAX][NMAX] = {0}, board_buffer[NMAX][NMAX];
+	int free_pos[FREE_POS_MAX];
 	int ok_game = 0, maxn = 0, scr = 0, prev_scr = 0, move_cnt = 0;
 
 	enable_view();
 	clear_screen();
-	spawn(num, board, free_pos, &ok_game);
+	spawn(num, board, &ok_game);
 	write_board(scr, num, board, &maxn);
 
 	while (!ok_game) {
@@ -446,62 +468,48 @@ void run_game(const int num) {
 
 		if (maxn == 2048) {
 			disable_raw_mode();
-			fprintf(stdout, "Well done! You beat my game with a score of %d, in %d moves.\n", scr, move_cnt);
+			fprintf(stdout, "Well done! You beat my game with a score of %d, in %d moves.\n", scr,
+					move_cnt);
 			return;
 		}
 
 		int key = readKey();
 
 		if (key == KEY_LEFT) {
+			copy_matrix(num, prev_board, board_buffer);
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_left(num, board, &scr);
-			if (is_move_valid(num, board, prev_board)) {
-				clear_screen();
-				spawn(num, board, free_pos, &ok_game);
-				write_board(scr, num, board, &maxn);
-				usleep(150000);
-				++move_cnt;
-			}
+
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, &maxn, &ok_game,
+						 &move_cnt);
 		}
 		if (key == KEY_UP) {
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_up(num, board, &scr);
-			if (is_move_valid(num, board, prev_board)) {
-				clear_screen();
-				spawn(num, board, free_pos, &ok_game);
-				write_board(scr, num, board, &maxn);
-				usleep(150000);
-				++move_cnt;
-			}
+
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, &maxn, &ok_game,
+						 &move_cnt);
 		}
 		if (key == KEY_DOWN) {
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_down(num, board, &scr);
-			if (is_move_valid(num, board, prev_board)) {
-				clear_screen();
-				spawn(num, board, free_pos, &ok_game);
-				write_board(scr, num, board, &maxn);
-				usleep(150000);
-				++move_cnt;
-			}
+
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, &maxn, &ok_game,
+						 &move_cnt);
 		}
 		if (key == KEY_RIGHT) {
 			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_right(num, board, &scr);
-			if (is_move_valid(num, board, prev_board)) {
-				clear_screen();
-				spawn(num, board, free_pos, &ok_game);
-				write_board(scr, num, board, &maxn);
-				usleep(150000);
-				++move_cnt;
-			}
+
+			process_move(num, board, prev_board, board_buffer, scr, &prev_scr, &maxn, &ok_game,
+						 &move_cnt);
 		}
 		if (key == KEY_R && move_cnt != 0) {
 			undo(num, board, prev_board, &scr, prev_scr);
 			clear_screen();
 			write_board(scr, num, board, &maxn);
 			usleep(150000);
-			++move_cnt;
+			--move_cnt;
 		}
 	}
 
