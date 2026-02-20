@@ -446,7 +446,7 @@ void run_game(const int num) {
 
 		if (maxn == 2048) {
 			disable_raw_mode();
-			fprintf(stdout, "Well done! You beat my game with a score of %d", scr);
+			fprintf(stdout, "Well done! You beat my game with a score of %d, in %d moves.\n", scr, move_cnt);
 			return;
 		}
 
