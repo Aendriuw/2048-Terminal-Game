@@ -172,11 +172,13 @@ void write_board(const int scr, const int num, int board[NMAX][NMAX], int *maxn)
 	print_score(scr);
 }
 
-// Builds the prev_board board needed for the undo function.
-void build_prev_board(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMAX]) {
+// Builds the prev_board board needed for the undo function and memorises the previous score.
+void build_prev_board(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMAX], const int scr, int *prev_scr) {
 	for (int i = 0; i < num; ++i)
 		for (int j = 0; j < num; ++j)
 			prev_board[i][j] = board[i][j];
+	
+	*prev_scr = scr;
 }
 
 // Compares the current board with it's previous state (prev_board).
@@ -416,11 +418,13 @@ int is_empty_cells(const int num, int board[NMAX][NMAX]) {
 	return 0;
 }
 
-// Undoes the last move made by the player.
-void undo(const int num, int board[NMAX][NMAX], const int prev_board[NMAX][NMAX]) {
+// Undoes the last move made by the player, keeping track of the previous score.
+void undo(const int num, int board[NMAX][NMAX], const int prev_board[NMAX][NMAX], int *scr, const int prev_scr) {
 	for (int i = 0; i < num; ++i)
 		for (int j = 0; j < num; ++j)
 			board[i][j] = prev_board[i][j];
+
+	*scr = prev_scr;
 }
 
 // Runs a game of 2048.
@@ -428,7 +432,7 @@ void undo(const int num, int board[NMAX][NMAX], const int prev_board[NMAX][NMAX]
 // is a cell that contains the value 2048 (in which case the game is won).
 void run_game(const int num) {
 	int board[NMAX][NMAX] = {0}, prev_board[NMAX][NMAX] = {0}, free_pos[130];
-	int ok_game = 0, maxn = 0, scr = 0;
+	int ok_game = 0, maxn = 0, scr = 0, prev_scr = 0;
 
 	enable_view();
 	clear_screen();
@@ -447,7 +451,7 @@ void run_game(const int num) {
 		int key = readKey();
 
 		if (key == KEY_LEFT) {
-			build_prev_board(num, board, prev_board);
+			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_left(num, board, &scr);
 			if (is_move_valid(num, board, prev_board)) {
 				clear_screen();
@@ -457,7 +461,7 @@ void run_game(const int num) {
 			}
 		}
 		if (key == KEY_UP) {
-			build_prev_board(num, board, prev_board);
+			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_up(num, board, &scr);
 			if (is_move_valid(num, board, prev_board)) {
 				clear_screen();
@@ -467,7 +471,7 @@ void run_game(const int num) {
 			}
 		}
 		if (key == KEY_DOWN) {
-			build_prev_board(num, board, prev_board);
+			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_down(num, board, &scr);
 			if (is_move_valid(num, board, prev_board)) {
 				clear_screen();
@@ -477,7 +481,7 @@ void run_game(const int num) {
 			}
 		}
 		if (key == KEY_RIGHT) {
-			build_prev_board(num, board, prev_board);
+			build_prev_board(num, board, prev_board, scr, &prev_scr);
 			move_right(num, board, &scr);
 			if (is_move_valid(num, board, prev_board)) {
 				clear_screen();
@@ -487,7 +491,7 @@ void run_game(const int num) {
 			}
 		}
 		if (key == KEY_R) {
-			undo(num, board, prev_board);
+			undo(num, board, prev_board, &scr, prev_scr);
 			clear_screen();
 			write_board(scr, num, board, &maxn);
 			usleep(150000);
