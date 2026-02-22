@@ -1,6 +1,6 @@
 # 2048 Terminal Game
 
-An educational recreation of the classic which can be played inside the terminal.
+An educational recreation of the classic 2048 game which can be played inside the terminal.
 
 ## Build
 
