@@ -5,12 +5,26 @@ An educational recreation of the classic 2048 game which can be played inside th
 ## Build
 
 bash:
-`gcc -o 2048 2048-terminal-game.c`
+```bash
+make
+```
 
 ## Run
 
-bash:
-`./2048`
+bash (in the same directory):
+```bash
+./2048
+```
+
+or from anywhere in the file system, if you add the executable to a path directory using `make install`:
+```bash
+play2048
+```
+
+## Adding the executable to the Path
+- `make install` - Compiles the game (if not already done) and automatically moves a copy to your `~/.local/bin folder` as `play2048`.
+- `make uninstall` - Removes the command from your system.
+- `make clean` - Removes the local `.c` executable from your current project folder.
 
 ## How to play
 
