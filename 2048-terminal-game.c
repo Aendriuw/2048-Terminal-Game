@@ -454,7 +454,7 @@ void process_move(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMA
 // The game ends if there are no possible moves left (in which case the game is lost), or if there
 // is a cell that contains the value 2048 (in which case the game is won).
 void run_game(const int num) {
-	int board[NMAX][NMAX] = {0}, prev_board[NMAX][NMAX] = {0}, free_pos[FREE_POS_MAX];
+	int board[NMAX][NMAX] = {0}, prev_board[NMAX][NMAX] = {0};
 	int board_buffer[NMAX][NMAX] = {0}, scr_buffer = 0;
 	int ok_game = 0, maxn = 0, scr = 0, prev_scr = 0, move_cnt = 0;
 
