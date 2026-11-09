@@ -566,8 +566,40 @@ void run_game(const int num, const unsigned long win_num) {
 	fprintf(stdout, "No possible moves left.\nYou lost!\n");
 }
 
-int main(void) {
-	int num;
+// Prints the usage of the program to the given stream.
+void print_usage(FILE *out) {
+	fprintf(out,
+			"Usage: play2048 [OPTION]\n"
+			"\n"
+			"Options:\n"
+			"  (none)         Start a new game\n"
+			"  -r, --resume   Resume the saved game (starts a new game if none is saved)\n"
+			"  -h, --help     Show this help message and exit\n");
+}
+
+int main(int argc, char *argv[]) {
+	int num, resume = 0;
+
+	if (argc > 2) {
+		fprintf(stderr, "Too many arguments.\n");
+		print_usage(stderr);
+		return 1;
+	}
+
+	if (argc == 2) {
+		if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+			print_usage(stdout);
+			return 0;
+		} else if (strcmp(argv[1], "-r") == 0 || strcmp(argv[1], "--resume") == 0) {
+			resume = 1;
+		} else {
+			fprintf(stderr, "Unknown option: %s\n", argv[1]);
+			print_usage(stderr);
+			return 1;
+		}
+	}
+
+	(void)resume; // Used once saving is implemented.
 	srand((unsigned)time(NULL));
 
 	fprintf(
