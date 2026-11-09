@@ -526,11 +526,11 @@ int main(void) {
 
 	fprintf(
 		stdout,
-		"How big do you want your board to be?\n"
 		"Press the right, left, up or down arrow to move the aux_buffers in the wanted direction, "
-		"press r to return 1 move\n"
-		"Press enter to confirm.\n"
-		"Enter a aux_buffer between 4 to 8:\n");
+		"press `r` to return 1 move\n"
+		"Press `enter` to confirm.\n"
+		"How big do you want your board to be?\n"
+		"Enter a number between 4 to 8:\n");
 
 	int aux_read_ret = read_grid_num(&num);
 
