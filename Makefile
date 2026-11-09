@@ -4,7 +4,8 @@ CFLAGS = -Wall -Wextra -O2
 
 # Define the target executable and source file
 TARGET = 2048-terminal-game
-SRC = 2048-terminal-game.c
+SRC = 2048-terminal-game.c game.c options_save.c
+HDR = game.h options_save.h
 
 # Installation settings
 INSTALL_DIR = $(HOME)/.local/bin
@@ -14,7 +15,7 @@ COMMAND_NAME = play2048
 all: $(TARGET)
 
 # Rule to compile the source file into the executable
-$(TARGET): $(SRC)
+$(TARGET): $(SRC) $(HDR)
 	$(CC) $(CFLAGS) -o $(TARGET) $(SRC)
 
 # Rule to install the game to your PATH
