@@ -20,6 +20,8 @@
 
 const int vi[4] = {0, 0, -1, 1};
 const int vj[4] = {-1, 1, 0, 0};
+const unsigned long win_options[] = {2048, 4096, 8192, 16384, 32768, 65536, 131072};
+#define WIN_OPTIONS_CNT (sizeof(win_options) / sizeof(win_options[0]))
 
 struct termios orig_termios;
 
@@ -127,6 +129,50 @@ int read_grid_num(int *num) {
 
 	*num = aux_num;
 	return 0;
+}
+
+// Returns 1 if the given number is a power of two that appears in win_options, 0 otherwise.
+int is_valid_win_num(const unsigned long val) {
+	if (val == 0 || (val & (val - 1)) != 0) {
+		return 0;
+	}
+
+	for (size_t i = 0; i < WIN_OPTIONS_CNT; ++i)
+		if (win_options[i] == val) return 1;
+
+	return 0;
+}
+
+// Prompts the user for the number needed to win, until a valid one (see is_valid_win_num()) is
+// entered. The entered value is memorised at the address of the win_num variable.
+// Returns 0 on success, 1 if input ended (EOF) or too many invalid attempts were made.
+int read_win_num(unsigned long *win_num) {
+	char aux_buff[32];
+	unsigned long aux_num;
+
+	fprintf(stdout, "Enter the number you want to reach to win (");
+	for (size_t i = 0; i < WIN_OPTIONS_CNT; ++i)
+		fprintf(stdout, "%lu%s", win_options[i], i + 1 < WIN_OPTIONS_CNT ? ", " : "):\n");
+
+	for (int att = 0; att < 8; ++att) {
+		if (fscanf(stdin, "%31s", aux_buff) != 1) return 1;
+
+		if (!is_num(aux_buff) || strlen(aux_buff) > 9) {
+			fprintf(stdout, "Please enter a valid win number!\n");
+			continue;
+		}
+
+		aux_num = strtoul(aux_buff, NULL, 10);
+		if (is_valid_win_num(aux_num)) {
+			*win_num = aux_num;
+			return 0;
+		}
+
+		fprintf(stdout, "The win number must be a power of two from the list above!\n");
+	}
+
+	fprintf(stdout, "Enough!\n");
+	return 1;
 }
 
 // Outputs the current score to stdout.
@@ -452,8 +498,8 @@ void process_move(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMA
 
 // Runs a game of 2048.
 // The game ends if there are no possible moves left (in which case the game is lost), or if there
-// is a cell that contains the value 2048 (in which case the game is won).
-void run_game(const int num) {
+// is a cell that contains the value win_num (in which case the game is won).
+void run_game(const int num, const unsigned long win_num) {
 	int board[NMAX][NMAX] = {0}, prev_board[NMAX][NMAX] = {0};
 	int board_buffer[NMAX][NMAX] = {0}, scr_buffer = 0;
 	int ok_game = 0, maxn = 0, scr = 0, prev_scr = 0, move_cnt = 0;
@@ -466,7 +512,7 @@ void run_game(const int num) {
 	while (!ok_game) {
 		if (!is_empty_cells(num, board) && !is_any_possible_move(num, board)) ok_game = 1;
 
-		if (maxn == 2048) {
+		if ((unsigned long)maxn >= win_num) {
 			disable_raw_mode();
 			fprintf(stdout, "Well done! You beat my game with a score of %d, in %d moves.\n", scr,
 					move_cnt);
@@ -528,8 +574,8 @@ int main(void) {
 		stdout,
 		"Press the right, left, up or down arrow to move the aux_buffers in the wanted direction, "
 		"press `r` to return 1 move\n"
-		"Press `enter` to confirm.\n"
 		"How big do you want your board to be?\n"
+		"Press `enter` to confirm.\n"
 		"Enter a number between 4 to 8:\n");
 
 	int aux_read_ret = read_grid_num(&num);
@@ -541,7 +587,10 @@ int main(void) {
 		return 1;
 	}
 
-	run_game(num);
+	unsigned long win_num;
+	if (read_win_num(&win_num) != 0) return 0;
+
+	run_game(num, win_num);
 
 	return 0;
 }
