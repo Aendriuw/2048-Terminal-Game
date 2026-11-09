@@ -626,14 +626,29 @@ void process_move(const int num, int board[NMAX][NMAX], int prev_board[NMAX][NMA
 // Runs a game of 2048.
 // The game ends if there are no possible moves left (in which case the game is lost), or if there
 // is a cell that contains the value win_num (in which case the game is won).
-void run_game(const int num, const unsigned long win_num) {
+// If resume is non-zero the board, score and undo state are loaded from the save file instead of
+// starting from an empty board (num and win_num must match the values stored in the save).
+void run_game(const int num, const unsigned long win_num, const int resume) {
 	int board[NMAX][NMAX] = {0}, prev_board[NMAX][NMAX] = {0};
 	int board_buffer[NMAX][NMAX] = {0}, scr_buffer = 0;
 	int ok_game = 0, maxn = 0, scr = 0, prev_scr = 0, move_cnt = 0, saved_cnt = 0;
 
+	if (resume) {
+		int saved_num;
+		unsigned long saved_win_num;
+
+		if (load_game(&saved_num, &saved_win_num, board, prev_board, &scr, &prev_scr, &move_cnt,
+					  &maxn) != 0 ||
+			saved_num != num || saved_win_num != win_num) {
+			fprintf(stderr, "Could not load the saved game!\n");
+			return;
+		}
+		saved_cnt = move_cnt;
+	}
+
 	enable_view();
 	clear_screen();
-	spawn(num, board, &ok_game);
+	if (!resume) spawn(num, board, &ok_game);
 	write_board(scr, num, board, &maxn);
 
 	while (!ok_game) {
@@ -743,8 +758,21 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	(void)resume; // Used once saving is implemented.
 	srand((unsigned)time(NULL));
+
+	if (resume) {
+		unsigned long saved_win_num;
+		int tmp_board[NMAX][NMAX], tmp_prev[NMAX][NMAX], tmp_scr, tmp_prev_scr, tmp_cnt, tmp_max;
+		int load_ret = load_game(&num, &saved_win_num, tmp_board, tmp_prev, &tmp_scr, &tmp_prev_scr,
+								 &tmp_cnt, &tmp_max);
+
+		if (load_ret == 0) {
+			run_game(num, saved_win_num, 1);
+			return 0;
+		}
+
+		if (load_ret == -1) fprintf(stderr, "The saved game is invalid, starting a new game.\n");
+	}
 
 	fprintf(
 		stdout,
@@ -766,7 +794,7 @@ int main(int argc, char *argv[]) {
 	unsigned long win_num;
 	if (read_win_num(&win_num) != 0) return 0;
 
-	run_game(num, win_num);
+	run_game(num, win_num, 0);
 
 	return 0;
 }
